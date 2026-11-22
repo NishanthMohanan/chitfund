@@ -1,0 +1,88 @@
+{
+  "app": {
+    "name": "ChitFund",
+    "skipToContent": "Skip to content",
+    "offline": "You're offline. Showing last saved screens.",
+    "mainNavigation": "Main navigation"
+  },
+  "nav": {
+    "home": "Home",
+    "groups": "Groups",
+    "payments": "Payments",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "dashboard": "Dashboard",
+    "members": "Members",
+    "collections": "Collections",
+    "more": "More",
+    "overview": "Overview",
+    "organizers": "Organizers",
+    "activity": "Activity"
+  },
+  "roles": {
+    "SUPERADMIN": "Superadmin",
+    "ORGANIZER": "Organizer",
+    "MEMBER": "Member"
+  },
+  "status": {
+    "PAID": "Paid",
+    "DUE": "Due",
+    "OVERDUE": "Overdue",
+    "REVERSED": "Reversed"
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "loadMore": "Load more",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "signIn": "Sign in"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "summary": "{{from}}–{{to}} of {{total}}",
+    "page": "Page {{page}} of {{totalPages}}",
+    "showing": "Showing {{shown}} of {{total}}"
+  },
+  "form": {
+    "optional": "Optional",
+    "phoneLabel": "Mobile number",
+    "phoneHint": "10-digit Indian mobile number",
+    "passwordLabel": "Password"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "signInSubtitle": "Use the mobile number your organizer registered.",
+    "signInFailed": "Phone number or password is incorrect",
+    "serverUnavailable": "Could not reach the server. Check your connection and try again.",
+    "signingIn": "Signing in"
+  },
+  "settings": {
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeSystem": "Match device",
+    "themeLight": "Light",
+    "themeDark": "Dark"
+  },
+  "empty": {
+    "memberHome": "Your groups and upcoming installments will appear here.",
+    "memberGroups": "You are not in any group yet.",
+    "memberPayments": "No payments recorded yet.",
+    "notifications": "No notifications yet.",
+    "organizerDashboard": "Collection totals will appear once a group is active.",
+    "organizerGroups": "No groups yet.",
+    "organizerMembers": "No members yet.",
+    "organizerCollections": "No installments are due.",
+    "adminOverview": "Platform totals will appear once organizers start groups.",
+    "adminOrganizers": "No organizer accounts yet.",
+    "adminGroups": "No groups across organizers yet.",
+    "adminActivity": "No activity recorded yet."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you opened does not exist.",
+    "action": "Go to sign in"
+  }
+}

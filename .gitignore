@@ -1,0 +1,95 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# Secrets and local environment (only the examples are committed)
+.env
+.env.*
+!.env.example
+!.env.test.example
+.dev.vars
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Build output
+dist/
+build/
+dev-dist/
+out/
+*.tsbuildinfo
+*.tgz
+stats.html
+
+# Local deploy tooling (Cloudflare Wrangler, Docker Compose overrides)
+.wrangler/
+docker-compose.override.yml
+
+# Caches
+.turbo/
+.vite/
+.cache/
+.eslintcache
+.prettiercache
+.stylelintcache
+
+# Tests and coverage
+coverage/
+.nyc_output/
+playwright-report/
+blob-report/
+test-results/
+playwright/.cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.cpuprofile
+*.heapsnapshot
+
+# Local data (Redis dumps, SQLite scratch files, uploads)
+dump.rdb
+*.rdb
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+*.dump
+backups/
+uploads/
+tmp/
+temp/
+
+# Editors and IDEs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+
+# Local AI assistant settings
+.claude/settings.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Dropbox
+.dropbox
+.dropbox.attr
+.dropbox.cache
+
+# Husky generated internals
+.husky/_/

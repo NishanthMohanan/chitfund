@@ -1,0 +1,10 @@
+{
+  "extends": "@chitfund/config/tsconfig.node.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "baseUrl": "."
+  },
+  "include": ["src", "test", "vitest.config.mts"],
+  "exclude": ["dist", "node_modules"]
+}

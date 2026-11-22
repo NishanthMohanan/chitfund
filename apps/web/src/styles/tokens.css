@@ -1,0 +1,143 @@
+/*
+ * Design tokens (MASTER_PROMPT.md section 6). Tailwind's default palette,
+ * radii, shadows and type scale are switched off so only these values exist.
+ * Utilities read the CSS variables, so the dark theme is a variable swap.
+ */
+
+@theme {
+  --color-*: initial;
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f0f2f5;
+  --color-border: #dde1e6;
+  --color-border-strong: #c1c7cd;
+  --color-text: #161616;
+  --color-text-secondary: #525a63;
+  --color-text-muted: #6f7780;
+  --color-primary: #0f4c81;
+  --color-primary-hover: #0b3c66;
+  --color-primary-subtle: #e6eef6;
+  --color-on-primary: #ffffff;
+  --color-success: #1b7a47;
+  --color-success-subtle: #e5f3eb;
+  --color-warning: #a15c00;
+  --color-warning-subtle: #fbf0e0;
+  --color-danger: #b42318;
+  --color-danger-hover: #93190f;
+  --color-danger-subtle: #fbe9e7;
+  --color-on-danger: #ffffff;
+  --color-info: #0f4c81;
+  --color-info-subtle: #e6eef6;
+  --color-focus: #0f62fe;
+  --color-scrim: rgb(16 24 40 / 0.4);
+
+  --font-*: initial;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --text-*: initial;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-subheading: 18px;
+  --text-subheading--line-height: 28px;
+  --text-h3: 20px;
+  --text-h3--line-height: 28px;
+  --text-h2: 24px;
+  --text-h2--line-height: 32px;
+  --text-h1: 30px;
+  --text-h1--line-height: 38px;
+
+  /* 4px grid: p-1 = 4px, p-2 = 8px, p-3 = 12px, p-4 = 16px, p-6 = 24px, p-8 = 32px, p-12 = 48px */
+  --spacing: 4px;
+
+  --radius-*: initial;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-*: initial;
+  --shadow-overlay: 0 4px 12px rgb(16 24 40 / 0.08);
+
+  --breakpoint-*: initial;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-*: initial;
+  --animate-sheet-in: sheet-in 200ms var(--ease-out);
+  --animate-fade-in: fade-in 150ms var(--ease-out);
+  --animate-toast-in: toast-in 200ms var(--ease-out);
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0f1215;
+  --color-surface: #171b20;
+  --color-surface-muted: #1e2329;
+  --color-border: #2c333b;
+  --color-border-strong: #3d4650;
+  --color-text: #f2f4f6;
+  --color-text-secondary: #b4bcc5;
+  --color-text-muted: #8a939d;
+  --color-primary: #5b9bd5;
+  --color-primary-hover: #7bb0e0;
+  --color-primary-subtle: #1a2c3e;
+  --color-on-primary: #0f1215;
+  --color-success: #4caf7d;
+  --color-success-subtle: #12301f;
+  --color-warning: #e0a23b;
+  --color-warning-subtle: #33270f;
+  --color-danger: #f0705f;
+  --color-danger-hover: #f48d80;
+  --color-danger-subtle: #3a1a16;
+  --color-on-danger: #0f1215;
+  --color-info: #5b9bd5;
+  --color-info-subtle: #1a2c3e;
+  --color-focus: #78a9ff;
+  --color-scrim: rgb(0 0 0 / 0.6);
+  --shadow-overlay: 0 4px 12px rgb(0 0 0 / 0.4);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
