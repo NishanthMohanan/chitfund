@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Role, passwordSchema, phoneSchema } from '@chitfund/shared';
+import { passwordSchema, phoneSchema } from '@chitfund/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { z } from 'zod';
-import { ROLE_HOME } from '../../app/navigation';
 import { ApiError, NetworkError, apiRequest } from '../../lib/api';
 import { Button } from '../../ui/Button';
 import { InlineAlert } from '../../ui/InlineAlert';
@@ -16,7 +15,7 @@ const signInFormSchema = z.object({ phone: phoneSchema, password: passwordSchema
 type SignInForm = z.input<typeof signInFormSchema>;
 
 const signInResponseSchema = z.object({
-  user: z.object({ role: z.nativeEnum(Role) }),
+  user: z.object({ id: z.string(), name: z.string() }),
 });
 
 export function SignInPage() {
@@ -35,7 +34,7 @@ export function SignInPage() {
         body: signInFormSchema.parse(values),
         schema: signInResponseSchema,
       }),
-    onSuccess: ({ user }) => navigate(ROLE_HOME[user.role], { replace: true }),
+    onSuccess: () => navigate('/', { replace: true }),
   });
 
   const failure =

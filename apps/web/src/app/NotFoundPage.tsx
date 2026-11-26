@@ -14,7 +14,7 @@ export function NotFoundPage() {
         icon={Launch}
         message={t('notFound.body')}
         action={
-          <Link to="/sign-in" className={buttonClasses('secondary', 'md')}>
+          <Link to="/" className={buttonClasses('secondary', 'md')}>
             {t('notFound.action')}
           </Link>
         }

@@ -40,9 +40,9 @@ describe('DateText', () => {
 describe('StatusTag', () => {
   it.each([
     ['PAID', 'Paid'],
-    ['DUE', 'Due'],
+    ['DUE', 'Due today'],
     ['OVERDUE', 'Overdue'],
-    ['PARTIAL', 'Reversed'],
+    ['PARTIAL', 'Part paid'],
   ] as const)('labels %s with text and an icon', (status, label) => {
     render(<StatusTag status={status} />);
     const tag = screen.getByText(label);

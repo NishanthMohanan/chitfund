@@ -127,7 +127,7 @@ export class DashboardService {
     const collected = await this.prisma.paymentRecord.aggregate({
       where: {
         reversedAt: null,
-        paidOn: { gte: monthStart },
+        paidOn: { gte: monthStart, lte: now },
         ticket: { group: { organizerId } },
       },
       _sum: { amount: true },

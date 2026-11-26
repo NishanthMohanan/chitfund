@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { cn } from './cn';
 import { ICON_SIZE } from './icon';
@@ -7,8 +8,8 @@ export type SidebarProps = {
   items: readonly NavItem[];
   label: string;
   appName: string;
-  /** Shown under the navigation, e.g. the signed-in role. */
-  footer?: string;
+  /** Shown under the navigation, e.g. the signed-in account. */
+  footer?: ReactNode;
 };
 
 /** Desktop navigation (1024px and up), fixed at 240px. */
@@ -43,9 +44,9 @@ export function Sidebar({ items, label, appName, footer }: SidebarProps) {
         </ul>
       </nav>
       {footer && (
-        <p className="border-t border-border px-4 py-3 text-caption text-text-secondary">
+        <div className="border-t border-border px-4 py-3 text-caption text-text-secondary">
           {footer}
-        </p>
+        </div>
       )}
     </aside>
   );

@@ -1,13 +1,16 @@
 # ChitFund
 
-Security-first PWA for managing Indian chit fund groups. `MASTER_PROMPT.md` is the full specification; this file records how the codebase applies it.
+A digital chit book for one organizer, run locally on their laptop. `MASTER_PROMPT.md` is the full specification (section 2 holds the business rules); this file records how the codebase applies it.
 
 ## Working agreement
 
 - Build one phase at a time (MASTER_PROMPT.md section 9). Present a plan and wait for approval before each phase; after it, run lint, typecheck, tests and migrations and report the results.
 - Do not create git commits. The user commits.
-- Mobile first. About 90% of users are members and organizers on phones; only the superadmin works on a laptop. Design every screen from 360px up. Desktop (1024px and up) is the enhancement.
+- One login: the organizer, which is the superadmin seeded from `.env`. Members are records without logins. Don't build member logins, user management or notifications yet.
+- Laptop first (1024px and up). Phone layouts are a later phase; screens must not break on smaller widths.
+- English only.
 - Every list endpoint and screen uses server-side pagination.
+- Correctness of money and history comes first: every change is correctable and keeps its old and new values in `audit_logs`.
 
 ## Layout
 
@@ -71,8 +74,8 @@ Local setup without Docker is described in `docs/local-setup.md`.
 
 **Database integrity**
 
-- `audit_logs` is append-only (a trigger blocks UPDATE, DELETE and TRUNCATE).
-- Payment records, payouts and installments cannot be deleted. Reversals are new data.
+- `audit_logs` is append-only (a trigger blocks UPDATE, DELETE and TRUNCATE). Write the audit entry with the same transaction client as the change.
+- Payment records, payouts and ticket holders cannot be deleted. A payment is reversed or corrected, never edited in place.
 - RLS policies exist on all organizer-scoped tables. They are keyed on `app.role` and `app.user_id` set per transaction, which is wired in Phase 1, together with a non-owner DB role.
 
 **Logging**
@@ -83,15 +86,28 @@ Local setup without Docker is described in `docs/local-setup.md`.
 
 ## Chit plans (domain)
 
-- An organizer creates **chit plan templates**. A template holds:
+The full rules are in MASTER_PROMPT.md section 2. In short:
+
+- A **chit plan template** holds:
   - the chit value;
   - the member count and duration (the standard plan is 20 members over 21 months);
   - a **fixed** monthly installment, the same every month (₹2,500 for a ₹50,000 plan);
-  - an exact **payout amount** for each month, entered by the organizer.
-- Bigger plans do not scale from the ₹50,000 figures; each template's amounts are entered independently.
-- **Members pay in month 1 too.** That whole month's collection is the organizer's commission (`isOrganizerMonth`), and no member withdraws that month.
-- A group is created from a template and gets its own editable copy of the schedule in `ChitGroupMonth`. Two groups on the same plan can therefore differ.
-- A ticket receives a payout once, and the amount must equal that month's `payoutAmount`.
+  - an exact **payout amount** for each month.
+- Bigger plans don't scale from the ₹50,000 figures; each template's amounts are entered independently.
+- Plan shape is enforced:
+  - duration = member count + 1;
+  - month 1 is always the commission month (`isOrganizerMonth`, derived, never typed): members pay, nobody withdraws;
+  - months 2 onward each have a payout above ₹0, no larger than member count × installment.
+- Start date and due day are set on the **group**, not the template. A group copies the schedule into `ChitGroupMonth`. A draft group is fully editable; after it starts, due dates are fixed.
+- Payments always pay off the oldest unpaid month first. Paying ahead and future-dated payments are allowed. The dashboard's "collected" counts only payments dated up to today.
+- A payout:
+  - defaults to the month's `payoutAmount` and can be edited before confirming, with a reason. The schedule is never overwritten;
+  - has the recipient's overdue dues (not future months) deducted, recorded as a linked payment;
+  - can be made for a future month after a warning and a confirm step;
+  - is limited to one per ticket and one per month.
+- Each group has a pool: a payout month's collection minus its payout. The organizer moves money between the pool and commission, and every move is recorded.
+- A vacant ticket keeps accruing dues. The next holder inherits them, or the organizer covers them at the end.
+- A group completes only when nothing is pending. Force complete records the unpaid dues as the organizer's loss.
 
 ## Web UI rules
 
@@ -109,5 +125,6 @@ Local setup without Docker is described in `docs/local-setup.md`.
 
 ## Known follow-ups
 
-- **Tamil font:** IBM Plex Sans Tamil is not published on npm. Self-host it from IBM's GitHub release when Tamil strings are added.
-- **Web CSP:** the strict CSP and other headers for Cloudflare Pages (`public/_headers`) are part of the Phase 6 staging deploy.
+- **Backups:** the data lives on one laptop. Automatic backups with a tested restore are listed under "Later" in MASTER_PROMPT.md section 9.
+- **Tamil font:** IBM Plex Sans Tamil is not published on npm. Self-host it from IBM's GitHub release if Tamil strings are added.
+- **Web CSP:** the strict CSP and other headers (`public/_headers`) arrive with the deployment work.

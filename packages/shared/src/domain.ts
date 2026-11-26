@@ -82,7 +82,36 @@ export const templateInputSchema = z
         message: 'Enter one payout amount for every month of the plan',
       });
     }
-  });
+    if (value.durationMonths !== value.memberCount + 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['durationMonths'],
+        message: 'A plan runs one month longer than its member count',
+      });
+    }
+    const collection = value.monthlyInstallment * BigInt(value.memberCount);
+    value.months.forEach((month, index) => {
+      if (month.monthNumber === 1) {
+        return;
+      }
+      if (month.payoutAmount <= 0n || month.payoutAmount > collection) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['months', index, 'payoutAmount'],
+          message: 'Enter a payout above zero and no more than one month of collection',
+        });
+      }
+    });
+  })
+  .transform((value) => ({
+    ...value,
+    // Month 1 is always the organizer's commission month.
+    months: value.months.map((month) => ({
+      monthNumber: month.monthNumber,
+      payoutAmount: month.monthNumber === 1 ? 0n : month.payoutAmount,
+      isOrganizerMonth: month.monthNumber === 1,
+    })),
+  }));
 export type TemplateInput = z.input<typeof templateInputSchema>;
 
 export const groupCreateSchema = z.object({
@@ -106,8 +135,7 @@ export const groupUpdateSchema = z.object({
 });
 
 export const groupMonthUpdateSchema = z.object({
-  dueDate: istDateSchema.optional(),
-  payoutAmount: paiseSchema.optional(),
+  payoutAmount: paiseSchema,
 });
 
 export const groupStatusChangeSchema = z.object({

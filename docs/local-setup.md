@@ -33,7 +33,7 @@ copy .env.example .env
 copy .env.test.example .env.test
 ```
 
-Put the role's password into `DATABASE_URL` in both files.
+Put the role's password into `DATABASE_URL` in both files. Every setting lives in `.env`; the code has no built-in defaults, so the API and the web dev server refuse to start if a variable is missing. With Docker, `docker compose` also reads the `POSTGRES_*`, `REDIS_PORT` and `MAILPIT_*` values from the same file.
 
 ## 4. Install, migrate, create the superadmin
 
@@ -50,8 +50,8 @@ pnpm --filter @chitfund/api superadmin:create
 pnpm dev
 ```
 
-- API: http://localhost:3000/api/health. API docs are at http://localhost:3000/api/docs (development only).
-- Web: http://localhost:5173. It calls the API directly at `VITE_API_URL` (http://localhost:3000/api), and the API allows the origins in `WEB_ORIGIN` through CORS. If you open the web app on another origin, add it to `WEB_ORIGIN`. Unset `VITE_API_URL` to use Vite's same-origin `/api` proxy instead.
+- API: `http://localhost:<PORT>/api/health`. API docs are at `/api/docs` on the same port (development only).
+- Web: `http://localhost:<WEB_PORT>`. It calls the API directly at `VITE_API_URL`, and the API allows the origins in `WEB_ORIGIN` through CORS. If you open the web app on another origin, add it to `WEB_ORIGIN`. Unset `VITE_API_URL` to use Vite's same-origin `/api` proxy (`API_PROXY_TARGET`) instead.
 
 `pnpm dev` builds `@chitfund/shared` first, then runs the shared package in watch mode, the API with `nest start --watch`, and Vite, all together.
 

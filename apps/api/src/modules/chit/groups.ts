@@ -54,7 +54,7 @@ class PayoutDto extends createZodDto(payoutCreateSchema) {}
 const ALLOWED_TRANSITIONS: Record<GroupStatus, readonly GroupStatus[]> = {
   DRAFT: ['ACTIVE', 'CANCELLED'],
   ACTIVE: ['COMPLETED'],
-  COMPLETED: ['ACTIVE'],
+  COMPLETED: [],
   CANCELLED: [],
 };
 
@@ -203,6 +203,9 @@ export class GroupsService {
 
   async update(organizerId: string, groupId: string, input: z.output<typeof groupUpdateSchema>) {
     const group = await this.owned(organizerId, groupId);
+    if (input.dueDayOfMonth !== undefined && group.status !== 'DRAFT') {
+      throw rule('GROUP_STARTED', 'The due day is fixed once the scheme has started');
+    }
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.chitGroup.update({
         where: { id: groupId },
@@ -244,6 +247,9 @@ export class GroupsService {
     const month = group.months.find((m) => m.monthNumber === monthNumber);
     if (!month) {
       throw notFound('Month not found');
+    }
+    if (group.status !== 'DRAFT') {
+      throw rule('GROUP_STARTED', 'The schedule is fixed once the scheme has started');
     }
     if (input.payoutAmount !== undefined) {
       const payout = await this.prisma.payout.findUnique({
@@ -553,11 +559,6 @@ export class GroupsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // The organizer decides the amount at payout time; the schedule follows it.
-      await tx.chitGroupMonth.update({
-        where: { id: month.id },
-        data: { payoutAmount: input.amount },
-      });
       const payout = await tx.payout.create({
         data: {
           groupId,

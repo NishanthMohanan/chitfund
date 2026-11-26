@@ -5,42 +5,63 @@ You are a senior full-stack engineer at a large fintech company. You are buildin
 
 ## 2. Product summary
 
-A chit fund management app with exactly three roles. No auctions. No online payments. No OTP. No WhatsApp/SMS.
+A digital chit book for one organizer. It replaces the paper records an organizer keeps for their chit groups. No auctions. No online payments. No OTP. No WhatsApp/SMS.
 
-- Each chit group has a fixed chit value, a fixed number of members (tickets), a fixed duration in months, and a fixed monthly installment.
-- Every month, each member pays the installment offline (cash/UPI/bank). The members marks it as paid with document attach option and organizer approves it as paid in the app.
-- Every month, the organizer records who receives that month's chit amount (the recipient), chosen offline.
-- Members can only view their own data.This app is basically a digital book which replaces the manual check records in chit books.
-- the app works by permission based rbac from the settings/user management . the user management wil have user tab and roles tab. each users password, data crud, activte/deactivate and each role crud based on permissions could be done.
-- Notification cases wll be mentioned by me and users can edit the inapp or push enable disable in their profile. Every user can edit their own profile expect username and phone number whih needs organizer or superadmin approval. Remeber the organizers are the owners of this company, the superadmin is the software owner like a systemadmin, the members are the customer of the chit plans.
+- The software is built entirely for the organizer, who runs it locally on their own laptop. The laptop is the main device; phone layouts come later.
+- There is exactly **one login**: the organizer. The account is the superadmin seeded from `.env` (name, phone, password) and has every permission. There are no other staff or organizer accounts.
+- Members are records the organizer keeps. They do not sign in. Member logins, user management and notifications are future work and must not be built now.
+- Data accuracy matters most. The organizer will make data-entry mistakes, so every entry can be corrected, and every change keeps its full history (who, when, what changed from what to what).
+- English only.
 
-### Roles and permissions
+### Chit plans and groups
 
-**SUPERADMIN** (one or very few accounts, created via a secure CLI seed command, never via public signup, the superadmin name, password and number are configured in .env)
-- Create, edit, suspend and reactivate organizer accounts
--Overrirde all the permissions
-- View all groups, members and collections across organizers (read-only by default)
-- View the audit log and security events (logins, failed logins, logouts, and all the activities within the app)
-- Reset any organizer's and members password (makes the user log out)
+- **Plan templates** hold the chit value, member count, duration, a **fixed** monthly installment (the same every month, month 1 included) and an exact payout amount for each month. The standard plan is 20 members over 21 months at ₹2,500 a month for a ₹50,000 chit. Bigger plans don't scale from these figures; each template's amounts are entered on their own.
+- **Plan shape is enforced:** duration = member count + 1. Month 1 is always the organizer's commission month: its whole collection is commission and nobody receives a payout. From month 2 on, every month has a payout above ₹0 and no larger than the month's collection (member count × installment).
+- Templates don't hold a start date or due day. Both are chosen when a **group** is created from a template, and the group gets its own copy of the month schedule.
+- A **draft** group is fully editable: name, code, start date, due day, its plan (re-copied from a template) and each month's payout amount. Once the group starts, the due day and due dates are fixed and can't be edited.
+- A group is draft → active → completed. Only a draft group can be cancelled; a completed group can't be reopened.
 
-**ORGANIZER**
-- Create and manage their own chit groups (draft → active → completed)
-- Create member accounts (name, phone, optional email) with a system-generated temporary password; the member must change it on first login
-- Assign members in a group (one person may hold more than one ticket)
-- Mark installments as paid (mode: CASH / UPI / BANK_TRANSFER, optional reference, optional note). Reversing a payment requires a reason and creates a reversal record; nothing is ever hard-deleted
-- Record the monthly recipient and payout amount for each month
-- Send announcements to a group or to all their members
-- See dashboards: due this month, collected, overdue, per-group progress
-- Update notice board
-- Reset passwords for their own members
+### Collections
 
-**MEMBER**
-- View their groups, ticket(s), installment schedule and status (Paid / Due / Overdue), payment history and payout month
-- Receive notifications (in-app and system push)
-- Change password, manage active sessions (sign out other devices)
-- Cannot see other members' profile details (only names in the group's recipient history, if the organizer enables it)
+- A **payment** is money a member pays for a ticket. It can be any amount, and it always pays off the oldest unpaid month first. Paying ahead is allowed and shows as advance. A payment may carry a future date; the organizer checks it before entering it. Recording a payment always has a confirm step, and a repeated submit never creates a second record.
+- A payment is never edited in place or deleted. **Correct payment** reverses the original and records the corrected entry in one step, and links the two. It can change the amount, date, mode, reference, note, ticket or group. **Reverse** (with a reason) cancels a payment outright.
+- A **payout** is the chit money handed to one ticket for one month. Each ticket gets one payout, and each month has one payout per group.
+  - The amount defaults to the month's scheduled payout and can be edited before confirming. A different amount needs a reason. The schedule keeps the template amount, and the payout records the amount actually paid. Both appear in history.
+  - The recipient's **overdue** dues on the payout date (not future months) are subtracted from the payout. The deduction is recorded as a payment on their ticket, linked to the payout, so their dues are cleared.
+  - Paying out a month whose due date has not arrived is allowed after a warning and a confirm step.
+  - The recipient picker shows the tickets that haven't received a payout, with each holder and their overdue dues.
+  - There is no payout correction or reversal. The organizer records payouts carefully.
 
-Organizers can only ever access data belonging to their own organizer_id. Members can only ever access their own records. This must be enforced on the server for every query, never only in the UI.
+### Pool and commission
+
+- Each group has a **pool**. A payout month's collection minus its payout stays in the pool. Month 1's collection is commission.
+- The organizer can move any amount from the pool to commission, and from commission back to the pool, with a note. Every move is recorded.
+
+### Tickets and members
+
+- One member may hold several tickets.
+- **Replace member:** a new member takes over a ticket from a given month and inherits its unpaid dues. The old holder stays in the ticket's history.
+- **Correct assignment:** fixes a ticket given to the wrong member. History records it as a correction, not as the member leaving.
+- **Remove member from a group:** the ticket becomes vacant and its dues keep building up until someone is assigned. The new holder inherits them. If the ticket is still vacant at the end, the organizer covers the dues.
+- **Delete member:** only for a duplicate or mistaken entry that never held a ticket and has no payments. The deleted details are kept in history.
+
+### Completing a group
+
+- A group can be completed only when every due is paid and every payout is recorded. Otherwise the app blocks it and lists exactly what is pending (for example "3 tickets owe ₹7,500; month 21 payout not recorded").
+- **Force complete:** the organizer bears the unpaid dues as a loss. The app shows the exact amount and records the loss against the organizer's commission.
+- A completed group shows its total commission earned prominently on its list row and card.
+
+### What the organizer can see
+
+- **Dashboard:** due this month, collected (payments dated up to today only), overdue, payouts pending, groups ending soon. Defaulters are counted by member, not by ticket.
+- **Commission report:** commission earned per group and per month for a chosen date range.
+- **Cash book:** chit money only (payments in, payouts out), by day and by payment mode, with a running balance.
+- **History:** a history panel on every payment, payout, group, ticket and member, plus one activity page for everything.
+- Receipts and export are not needed now.
+
+### Access
+
+The single organizer account (role `SUPERADMIN`) can do everything. The `ORGANIZER` and `MEMBER` roles stay in the schema for future logins. Every query is still scoped to the signed-in account on the server, never only in the UI.
 
 ## 3. Tech stack (do not substitute without asking)
 
@@ -103,7 +124,7 @@ Treat this app as a target. Assume attackers know the URL and have valid member 
 - Ownership scoping enforced in a service layer helper (organizerId / userId taken from the authenticated session, never from request body or params)
 - Add PostgreSQL Row-Level Security policies as a second line of defense for organizer-scoped tables
 - IDs exposed to clients are UUIDv7, never sequential integers
-- Write e2e tests proving a member cannot read another member's data and an organizer cannot read another organizer's data (IDOR tests)
+- Write e2e tests proving an unauthenticated request cannot read or change anything, and that one organizer's data is never visible to another account (IDOR tests)
 
 **Transport and headers**
 - HTTPS only, HSTS (with preload once stable)
@@ -113,8 +134,8 @@ Treat this app as a target. Assume attackers know the URL and have valid member 
 
 **Data**
 - Money stored as integer paise (`BIGINT`), never floats; all arithmetic in `packages/shared/money.ts` with tests
-- No hard deletes for financial records; reversals are new records
-- Append-only `audit_logs` for every create/update/reversal/login/permission change (actor, action, entity, before/after, IP, user agent, timestamp)
+- No hard deletes for financial records; reversals and corrections are new records
+- Append-only `audit_logs` for every create/update/reversal/correction/delete/login (actor, action, entity, the changed fields with old and new values, IP, user agent, timestamp), written in the same transaction as the change
 - PII (phone, email) masked in logs; Sentry scrubbing enabled
 - Encrypted DB backups; documented restore procedure tested once per phase
 
@@ -132,19 +153,20 @@ Treat this app as a target. Assume attackers know the URL and have valid member 
 
 All tables: `id` (UUIDv7), `createdAt`, `updatedAt`. Money in paise.
 
-- `User` — role (SUPERADMIN | ORGANIZER | MEMBER), name, phone (unique), email?, passwordHash, mustChangePassword, totpSecret? (encrypted), status (ACTIVE | SUSPENDED | LOCKED), failedLoginCount, lockedUntil?, organizerId? (for members: the organizer who created them), lastLoginAt
-- `Session` — userId, refreshTokenHash, familyId, deviceLabel, ip, userAgent, expiresAt, revokedAt?
-- `ChitGroup` — organizerId, name, code, chitValue, memberCount, durationMonths, monthlyInstallment, startDate, dueDayOfMonth, status (DRAFT | ACTIVE | COMPLETED | CANCELLED)
-- `Ticket` — groupId, memberId, ticketNumber (unique per group)
-- `Installment` — ticketId, monthNumber, dueDate, amount, status (DUE | PAID | OVERDUE | REVERSED), unique (ticketId, monthNumber)
-- `PaymentRecord` — installmentId, amount, mode (CASH | UPI | BANK_TRANSFER), reference?, note?, markedById, markedAt, reversedById?, reversedAt?, reversalReason?
-- `Payout` — groupId, monthNumber (unique per group), ticketId (recipient), amount, paidOn, recordedById, note?
-- `Notification` — userId, type, title, body, link?, readAt?
-- `PushSubscription` — userId, endpoint (unique), p256dh, auth, userAgent, lastUsedAt
-- `Announcement` — organizerId, groupId?, title, body, createdById
-- `AuditLog` — actorId, action, entityType, entityId, before (JSONB), after (JSONB), ip, userAgent, createdAt (append-only; no update/delete grants)
+- `User` — the organizer login (role SUPERADMIN, seeded from `.env`). ORGANIZER and MEMBER roles are kept for future logins.
+- `Session` — userId, token hash, device info, expiresAt, revokedAt?
+- `ChitPlanTemplate` + `ChitPlanTemplateMonth` — the plan and its per-month payout amounts (month 1 is the commission month)
+- `ChitGroup` + `ChitGroupMonth` — a group created from a template with its own copy of the schedule; start date and due day are set on the group
+- `Member` — a person the organizer enrols (no login)
+- `PaymentModeMaster` — Cash, UPI, Bank transfer and the organizer's own modes, plus a system "Payout deduction" mode that can't be chosen by hand
+- `Ticket` — a seat in a group; the current holder is optional (a vacant ticket has none)
+- `TicketHolder` — who held a ticket from which month, and how their holding ended (left, removed or corrected)
+- `PaymentRecord` — money received for a ticket; reversal fields; a link to the payment it corrects and to the payout it was deducted from; a client request key that makes a repeated submit safe
+- `Payout` — chit money paid to one ticket for one month: amount, reason when it differs from the schedule, deduction, net amount handed over
+- `GroupFundEntry` — pool and commission movements: pool → commission, commission → pool, organizer loss on force complete
+- `AuditLog` — actor, action, entity, changed fields with old and new values, IP, user agent (append-only)
 
-Generating installments: when a group is activated, create all installments for all tickets in one transaction.
+Dues are computed from payments on read (oldest month first); no installment rows are stored.
 
 ## 6. Design system — must look like enterprise software, not AI-generated
 
@@ -203,16 +225,14 @@ Status must never be shown by color alone: always pair with a text label (Paid, 
 Button (primary, secondary, ghost, danger; sm/md), IconButton, Input, PhoneInput, PasswordInput (show/hide), Select, Textarea, Checkbox, Switch, Badge/StatusTag, Card, Table (desktop) that collapses to list rows (mobile), DescriptionList, Tabs, Dialog, BottomSheet (mobile), Toast, InlineAlert, EmptyState (icon + one line + one action), Skeleton, Pagination, Amount (formats paise → ₹ with Indian grouping via `Intl.NumberFormat('en-IN')`, e.g. ₹1,00,000), DateText, Avatar (initials, no generated faces), PageHeader, BottomTabBar, Sidebar.
 
 ### Layout and navigation
-- Mobile (primary): top app bar with page title + bottom tab bar
-  - Member tabs: Home, Groups, Payments, Notifications, Profile
-  - Organizer tabs: Dashboard, Groups, Members, Collections, More
-- Desktop (≥ 1024px): left sidebar (240px) + content; tables instead of list rows
-- Superadmin is desktop-first but must work on mobile
+- Laptop first (1024px and up): left sidebar (240px) + content, tables for lists
+- Sidebar: Dashboard, Groups, Plans, Members, Payments, Dues, Reports (Commission, Cash book), Activity, Settings (payment modes, profile)
+- Phone layouts (top app bar + bottom tab bar) are a later phase; screens must not break below 1024px, but they aren't designed for it yet
 
 ### UX rules
 - Skeleton loaders that match the final layout; no full-screen spinners
 - Every list has a real empty state with one clear next action
-- Mark as paid: one tap opens a bottom sheet (mode, reference, note) → confirm → toast with 10-second Undo (undo creates a reversal record)
+- Record payment: a dialog (ticket, amount, date, mode, reference, note) → a confirm step that restates the member, ticket and amount → toast. The confirm button disables while saving.
 - Destructive or financial actions always confirm and state the exact amount and person
 - Forms: inline validation on blur, error text under the field, never only a red border
 - Offline: thin banner "You're offline. Showing last saved screens." and disable actions that need the server
@@ -226,7 +246,9 @@ Button (primary, secondary, ghost, danger; sm/md), IconButton, Input, PhoneInput
 - Maskable icons (192, 512) + Apple touch icon + iOS splash screens; simple monogram logo, flat, no gradients
 - Custom install prompt on Android; an "Add to Home Screen" help sheet for iOS (push works on iOS only after install)
 
-## 7. Notifications
+## 7. Notifications (future, do not build yet)
+
+Arrives together with member logins. Kept here as the target design.
 
 - In-app: notification center (bell with unread count), real-time via SSE, stored in `Notification` table, mark read / mark all read
 - System push (outside the app): Web Push with VAPID; ask permission only after a user action (a "Turn on notifications" button in Profile or after first login), never on page load
@@ -246,26 +268,18 @@ apps/api/src/
   config/            env schema (Zod), security config
   common/            guards, decorators, interceptors, filters, pipes
   modules/
-    auth/            login, refresh, logout, password change, TOTP, sessions
-    users/
-    organizers/
-    members/
-    groups/
-    installments/
-    payments/
-    payouts/
-    notifications/   SSE stream, web push, jobs
-    announcements/
-    audit/
-    dashboard/
-  prisma/            schema.prisma, migrations, seed.ts, create-superadmin.ts
+    auth/            login, logout, session, password change
+    chit/            templates, groups, tickets, members, payments, payouts, pool, dashboard, reports
+    audit/           history and activity
+    health/
+  prisma/            schema.prisma, migrations, create-superadmin.ts, superadmin seed
 apps/web/src/
   app/               router, providers, layouts
-  features/          auth, dashboard, groups, members, collections, payments, notifications, profile, admin
+  features/          auth, dashboard, groups, plans, members, payments, dues, reports, activity, settings
   ui/                design system components
   styles/            tokens.css, fonts.css, base.css
   lib/               api client, query client, i18n, format
-  locales/en, locales/ta
+  locales/en
 packages/shared/src/ schemas, enums, money.ts, dates.ts
 ```
 
@@ -274,28 +288,29 @@ packages/shared/src/ schemas, enums, money.ts, dates.ts
 **Phase 0 — Foundation**
 Monorepo, tooling, Docker Compose, env validation, Prisma schema + first migration, `create-superadmin` CLI, design tokens + fonts + base UI components, app shell with layouts and navigation, CI (lint, typecheck, test, build). Write CLAUDE.md summarizing this file.
 
-**Phase 1 — Auth and security core**
-Login, refresh rotation, logout, sessions, forced password change, lockout, rate limiting, CSRF, Helmet/CSP, RolesGuard, ownership helpers, TOTP for superadmin, audit logging interceptor. IDOR and auth e2e tests.
+**Done before this plan:** single-account session login, the organizer ledger API (templates, groups, tickets, members, payment modes, payments, payouts, dashboard), schema and migrations.
 
-**Phase 2 — Superadmin + organizers**
-Organizer CRUD, suspend/reactivate, password reset, audit log viewer, security events.
+**Phase A — Business rules and corrections (API)**
+Plan shape checks; draft groups fully editable and due dates fixed after start; the new payout flow (schedule default, reason for a different amount, overdue deduction, early-month confirm); vacant tickets with remove, correct assignment and replace; member delete; Correct payment; safe repeated submits; pool and commission moves; complete and force-complete rules; dashboard fixes. Migration and tests.
 
-**Phase 3 — Groups, members, tickets**
-Member account creation with temporary password (shown once to organizer, copy button), group lifecycle, ticket assignment, installment generation on activation.
+**Phase B — History and reports (API)**
+Audit entries with changed fields only, written inside each transaction with IP and user agent; history per record and an activity feed; commission report; cash book. Tests.
 
-**Phase 4 — Collections**
-Mark as paid, undo/reversal, overdue job, organizer dashboard and collection views, payout recording, member views of schedule/history.
+**Phase C — Organizer screens: setup**
+Laptop layout and sidebar; sign-in; plans; members; groups (create, draft edit, start, tickets, replace, correct, remove); settings.
 
-**Phase 5 — Notifications**
-Notification center, SSE, Web Push subscribe/unsubscribe, scheduled reminders, announcements.
+**Phase D — Organizer screens: money**
+Dashboard; payments (record with confirm, correct, reverse); payouts (recipient picker, deduction, early warning); dues; pool and commission; complete and force complete.
 
-**Phase 6 — PWA polish and hardening**
-Manifest, icons, splash, install flows, offline shell, Lighthouse PWA/Accessibility/Best Practices ≥ 95, Playwright critical paths, security review checklist, backup/restore runbook, staging deploy.
+**Phase E — Organizer screens: reports and history**
+Commission report, cash book, history panels, activity page.
+
+**Later (not now):** backups and restore, phone layouts, member logins, notifications, receipts and export, Tamil.
 
 ## 10. Definition of done (every phase)
 - Type-check, lint and all tests pass; new logic has unit tests; money logic has 100% branch coverage
 - Every new endpoint: Zod validation, role guard, ownership check, audit log, rate limit where relevant, e2e test including an unauthorized-access case
 - UI follows section 6 exactly; no ad-hoc colors, sizes or fonts outside tokens
-- Works at 360px width and on desktop; light and dark mode checked
+- Works on a laptop (1024px and up) and doesn't break on smaller widths; light and dark mode checked
 - No console errors, no `any`, no commented-out code, no emojis
 - CLAUDE.md updated if conventions changed

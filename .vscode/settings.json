@@ -1,0 +1,10 @@
+{
+  "python.terminal.useEnvFile": true,
+  // Pushes from this repository go out as NishanthMohanan, never as the
+  // GitHub account signed in to VS Code. These stop VS Code from handing its
+  // own GitHub session to git, so Git Credential Manager asks for the account
+  // named in the repository's git config (credential.username).
+  "github.gitAuthentication": false,
+  "git.terminalAuthentication": false,
+  "git.useIntegratedAskPass": false
+}

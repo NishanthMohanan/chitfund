@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
+/**
+ * Every setting comes from the environment (.env locally). There are no
+ * built-in defaults: a missing variable stops the API at boot.
+ */
+
 export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  /** Comma-separated origins allowed by CORS, e.g. http://localhost:5173,http://127.0.0.1:5173. */
+  NODE_ENV: z.enum(['development', 'test', 'production']),
+  PORT: z.coerce.number().int().min(1).max(65535),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']),
+  /** Comma-separated origins allowed by CORS. */
   WEB_ORIGIN: z
     .string()
     .transform((value) =>
@@ -26,17 +31,14 @@ export const envSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined)),
   /** Hours a sign-in stays valid without activity. */
-  SESSION_IDLE_HOURS: z.coerce.number().int().min(1).max(720).default(72),
+  SESSION_IDLE_HOURS: z.coerce.number().int().min(1).max(720),
   /** Number of reverse proxies in front of the API, used to resolve the client IP. */
-  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5),
   /**
    * When true, the API creates or replaces the superadmin from the SUPERADMIN_*
    * variables at startup. When false, the stored superadmin is left untouched.
    */
-  SUPERADMIN_SEED_ON_START: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((value) => value === 'true'),
+  SUPERADMIN_SEED_ON_START: z.enum(['true', 'false']).transform((value) => value === 'true'),
   SUPERADMIN_PHONE: z.string().optional(),
   SUPERADMIN_PASSWORD: z.string().optional(),
   SUPERADMIN_NAME: z.string().optional(),

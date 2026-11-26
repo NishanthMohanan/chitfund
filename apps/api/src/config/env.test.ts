@@ -1,20 +1,43 @@
 import { describe, expect, it } from 'vitest';
 import { EnvValidationError, parseEnv } from './env';
 
+// Test fixtures only. Real values live in .env.
 const valid = {
+  NODE_ENV: 'development',
+  PORT: '3000',
+  LOG_LEVEL: 'info',
   WEB_ORIGIN: 'http://localhost:5173',
   DATABASE_URL: 'postgresql://app:secret-value@localhost:5432/chitfund',
   REDIS_URL: 'redis://127.0.0.1:6379',
+  SESSION_IDLE_HOURS: '72',
+  TRUST_PROXY_HOPS: '0',
+  SUPERADMIN_SEED_ON_START: 'false',
 };
 
 describe('parseEnv', () => {
-  it('applies defaults', () => {
+  it('parses a complete environment', () => {
     expect(parseEnv(valid)).toMatchObject({
       NODE_ENV: 'development',
       PORT: 3000,
       LOG_LEVEL: 'info',
+      SESSION_IDLE_HOURS: 72,
       TRUST_PROXY_HOPS: 0,
+      SUPERADMIN_SEED_ON_START: false,
     });
+  });
+
+  it('has no built-in defaults', () => {
+    for (const key of [
+      'NODE_ENV',
+      'PORT',
+      'LOG_LEVEL',
+      'SESSION_IDLE_HOURS',
+      'TRUST_PROXY_HOPS',
+      'SUPERADMIN_SEED_ON_START',
+    ] as const) {
+      const { [key]: _omitted, ...rest } = valid;
+      expect(() => parseEnv(rest)).toThrow(new RegExp(key));
+    }
   });
 
   it('coerces numeric values', () => {
