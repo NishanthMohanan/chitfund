@@ -26,9 +26,11 @@
   },
   "status": {
     "PAID": "Paid",
-    "DUE": "Due",
-    "OVERDUE": "Overdue",
-    "REVERSED": "Reversed"
+    "ADVANCE": "Paid in advance",
+    "PARTIAL": "Part paid",
+    "DUE": "Due today",
+    "UPCOMING": "Upcoming",
+    "OVERDUE": "Overdue"
   },
   "actions": {
     "close": "Close",

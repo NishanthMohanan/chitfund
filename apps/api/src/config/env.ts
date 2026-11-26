@@ -18,12 +18,29 @@ export const envSchema = z.object({
     .string()
     .url()
     .refine((value) => /^postgres(ql)?:\/\//.test(value), 'Must be a PostgreSQL URL'),
+  /** Optional. Without it the API runs as a single local process. */
   REDIS_URL: z
     .string()
     .url()
-    .refine((value) => /^rediss?:\/\//.test(value), 'Must be a Redis URL'),
+    .refine((value) => /^rediss?:\/\//.test(value), 'Must be a Redis URL')
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  /** Hours a sign-in stays valid without activity. */
+  SESSION_IDLE_HOURS: z.coerce.number().int().min(1).max(720).default(72),
   /** Number of reverse proxies in front of the API, used to resolve the client IP. */
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+  /**
+   * When true, the API creates or replaces the superadmin from the SUPERADMIN_*
+   * variables at startup. When false, the stored superadmin is left untouched.
+   */
+  SUPERADMIN_SEED_ON_START: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  SUPERADMIN_PHONE: z.string().optional(),
+  SUPERADMIN_PASSWORD: z.string().optional(),
+  SUPERADMIN_NAME: z.string().optional(),
+  SUPERADMIN_EMAIL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

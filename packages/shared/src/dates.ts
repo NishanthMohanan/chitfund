@@ -35,3 +35,22 @@ export function formatIstDate(date: Date, pattern = 'd MMM yyyy'): string {
 export function formatIstDateTime(date: Date): string {
   return format(inIst(date), 'd MMM yyyy, h:mm a');
 }
+
+/** Parses a calendar date typed as yyyy-mm-dd into midnight India time. */
+export function istDateFromIso(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const date = new TZDate(year, month - 1, day, IST_TIME_ZONE);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+  return new Date(date.getTime());
+}
+
+/** The India calendar date of `date` as yyyy-mm-dd, for date inputs. */
+export function toIstIsoDate(date: Date): string {
+  return format(inIst(date), 'yyyy-MM-dd');
+}

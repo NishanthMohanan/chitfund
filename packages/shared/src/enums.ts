@@ -14,20 +14,16 @@ export const UserStatus = {
 } as const;
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
-export const PaymentMode = {
-  CASH: 'CASH',
-  UPI: 'UPI',
-  BANK_TRANSFER: 'BANK_TRANSFER',
-} as const;
-export type PaymentMode = (typeof PaymentMode)[keyof typeof PaymentMode];
-
-export const InstallmentStatus = {
-  DUE: 'DUE',
+/** Computed per ticket and month from the ledger; never stored. */
+export const DueStatus = {
   PAID: 'PAID',
+  PARTIAL: 'PARTIAL',
+  DUE: 'DUE',
   OVERDUE: 'OVERDUE',
-  REVERSED: 'REVERSED',
+  UPCOMING: 'UPCOMING',
+  ADVANCE: 'ADVANCE',
 } as const;
-export type InstallmentStatus = (typeof InstallmentStatus)[keyof typeof InstallmentStatus];
+export type DueStatus = (typeof DueStatus)[keyof typeof DueStatus];
 
 export const GroupStatus = {
   DRAFT: 'DRAFT',

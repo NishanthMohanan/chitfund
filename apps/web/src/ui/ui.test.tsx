@@ -42,7 +42,7 @@ describe('StatusTag', () => {
     ['PAID', 'Paid'],
     ['DUE', 'Due'],
     ['OVERDUE', 'Overdue'],
-    ['REVERSED', 'Reversed'],
+    ['PARTIAL', 'Reversed'],
   ] as const)('labels %s with text and an icon', (status, label) => {
     render(<StatusTag status={status} />);
     const tag = screen.getByText(label);

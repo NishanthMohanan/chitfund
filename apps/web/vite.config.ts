@@ -52,14 +52,50 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      '/api': { target: 'http://127.0.0.1:3000', changeOrigin: false },
+      '/api': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: false,
+        // While the API is still starting, answer 503 quietly instead of logging proxy errors.
+        configure: (proxy) => {
+          proxy.on('error', (_error, _req, res) => {
+            if ('writeHead' in res && !res.headersSent) {
+              res.writeHead(503, { 'Content-Type': 'application/json' });
+              res.end(
+                JSON.stringify({
+                  statusCode: 503,
+                  code: 'API_STARTING',
+                  message: 'The server is starting. Try again in a moment',
+                }),
+              );
+            }
+          });
+        },
+      },
     },
   },
   preview: {
     port: 4173,
     strictPort: true,
     proxy: {
-      '/api': { target: 'http://127.0.0.1:3000', changeOrigin: false },
+      '/api': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: false,
+        // While the API is still starting, answer 503 quietly instead of logging proxy errors.
+        configure: (proxy) => {
+          proxy.on('error', (_error, _req, res) => {
+            if ('writeHead' in res && !res.headersSent) {
+              res.writeHead(503, { 'Content-Type': 'application/json' });
+              res.end(
+                JSON.stringify({
+                  statusCode: 503,
+                  code: 'API_STARTING',
+                  message: 'The server is starting. Try again in a moment',
+                }),
+              );
+            }
+          });
+        },
+      },
     },
   },
   build: {

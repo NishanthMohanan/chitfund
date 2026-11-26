@@ -23,19 +23,6 @@ enum UserStatus {
   LOCKED
 }
 
-enum PaymentMode {
-  CASH
-  UPI
-  BANK_TRANSFER
-}
-
-enum InstallmentStatus {
-  DUE
-  PAID
-  OVERDUE
-  REVERSED
-}
-
 enum GroupStatus {
   DRAFT
   ACTIVE
@@ -63,18 +50,19 @@ model User {
   organizerId        String?    @map("organizer_id") @db.Uuid
   lastLoginAt        DateTime?  @map("last_login_at") @db.Timestamptz(3)
 
-  organizer              User?              @relation("OrganizerMembers", fields: [organizerId], references: [id])
-  members                User[]             @relation("OrganizerMembers")
+  organizer              User?               @relation("OrganizerMembers", fields: [organizerId], references: [id])
+  members                User[]              @relation("OrganizerMembers")
   sessions               Session[]
-  tickets                Ticket[]
+  memberRecords          Member[]
+  paymentModes           PaymentModeMaster[]
   organizedGroups        ChitGroup[]
   chitPlanTemplates      ChitPlanTemplate[]
   notifications          Notification[]
   pushSubscriptions      PushSubscription[]
-  organizerAnnouncements Announcement[]     @relation("AnnouncementOrganizer")
-  createdAnnouncements   Announcement[]     @relation("AnnouncementCreator")
-  markedPayments         PaymentRecord[]    @relation("PaymentMarkedBy")
-  reversedPayments       PaymentRecord[]    @relation("PaymentReversedBy")
+  organizerAnnouncements Announcement[]      @relation("AnnouncementOrganizer")
+  createdAnnouncements   Announcement[]      @relation("AnnouncementCreator")
+  markedPayments         PaymentRecord[]     @relation("PaymentMarkedBy")
+  reversedPayments       PaymentRecord[]     @relation("PaymentReversedBy")
   recordedPayouts        Payout[]
   auditLogs              AuditLog[]
 
@@ -191,6 +179,52 @@ model ChitGroupMonth {
   @@map("chit_group_months")
 }
 
+/// A person enrolled by the organizer. Members do not sign in.
+model Member {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organizerId   String   @map("organizer_id") @db.Uuid
+  name          String   @db.VarChar(120)
+  phone         String   @db.VarChar(16)
+  phoneVerified Boolean  @default(false) @map("phone_verified")
+  address       String?  @db.VarChar(500)
+  idProofType   String?  @map("id_proof_type") @db.VarChar(60)
+  idProofNumber String?  @map("id_proof_number") @db.VarChar(60)
+  nomineeName   String?  @map("nominee_name") @db.VarChar(120)
+  nomineePhone  String?  @map("nominee_phone") @db.VarChar(16)
+  notes         String?  @db.VarChar(1000)
+
+  organizer User            @relation(fields: [organizerId], references: [id])
+  tickets   Ticket[]
+  holdings  TicketHolder[]
+  payments  PaymentRecord[]
+
+  @@unique([organizerId, phone])
+  @@index([organizerId, name])
+  @@map("members")
+}
+
+/// Master list of payment modes (Cash, UPI, Bank transfer, ...).
+model PaymentModeMaster {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organizerId String   @map("organizer_id") @db.Uuid
+  name        String   @db.VarChar(60)
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+
+  organizer User            @relation(fields: [organizerId], references: [id])
+  payments  PaymentRecord[]
+  payouts   Payout[]
+
+  @@unique([organizerId, name])
+  @@map("payment_modes")
+}
+
+/// A seat in a group. Dues and payments belong to the ticket, so a replacement
+/// member takes over the ticket and its history stays intact.
 model Ticket {
   id           String   @id @default(uuid(7)) @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -199,58 +233,67 @@ model Ticket {
   memberId     String   @map("member_id") @db.Uuid
   ticketNumber Int      @map("ticket_number")
 
-  group        ChitGroup     @relation(fields: [groupId], references: [id])
-  member       User          @relation(fields: [memberId], references: [id])
-  installments Installment[]
-  payout       Payout?
+  group    ChitGroup       @relation(fields: [groupId], references: [id])
+  member   Member          @relation(fields: [memberId], references: [id])
+  holders  TicketHolder[]
+  payments PaymentRecord[]
+  payout   Payout?
 
   @@unique([groupId, ticketNumber])
   @@index([memberId])
   @@map("tickets")
 }
 
-model Installment {
-  id          String            @id @default(uuid(7)) @db.Uuid
-  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
-  ticketId    String            @map("ticket_id") @db.Uuid
-  monthNumber Int               @map("month_number")
-  dueDate     DateTime          @map("due_date") @db.Timestamptz(3)
-  amount      BigInt
-  status      InstallmentStatus @default(DUE)
+/// Who held a ticket and from which month. A member leaving closes their row.
+model TicketHolder {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  ticketId   String    @map("ticket_id") @db.Uuid
+  memberId   String    @map("member_id") @db.Uuid
+  fromMonth  Int       @map("from_month")
+  leftAt     DateTime? @map("left_at") @db.Timestamptz(3)
+  leftReason String?   @map("left_reason") @db.VarChar(500)
 
-  ticket         Ticket          @relation(fields: [ticketId], references: [id])
-  paymentRecords PaymentRecord[]
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
 
-  @@unique([ticketId, monthNumber])
-  @@index([status, dueDate])
-  @@map("installments")
+  @@index([ticketId])
+  @@index([memberId])
+  @@map("ticket_holders")
 }
 
+/// Money received for a ticket. Any amount; it settles the oldest dues first.
+/// Never deleted: a mistake is reversed.
 model PaymentRecord {
-  id             String      @id @default(uuid(7)) @db.Uuid
-  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
-  installmentId  String      @map("installment_id") @db.Uuid
+  id             String    @id @default(uuid(7)) @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  ticketId       String    @map("ticket_id") @db.Uuid
+  payerMemberId  String    @map("payer_member_id") @db.Uuid
   amount         BigInt
-  mode           PaymentMode
-  reference      String?     @db.VarChar(120)
-  note           String?     @db.VarChar(500)
-  markedById     String      @map("marked_by_id") @db.Uuid
-  markedAt       DateTime    @default(now()) @map("marked_at") @db.Timestamptz(3)
-  reversedById   String?     @map("reversed_by_id") @db.Uuid
-  reversedAt     DateTime?   @map("reversed_at") @db.Timestamptz(3)
-  reversalReason String?     @map("reversal_reason") @db.VarChar(500)
+  modeId         String    @map("mode_id") @db.Uuid
+  reference      String?   @db.VarChar(120)
+  note           String?   @db.VarChar(500)
+  paidOn         DateTime  @map("paid_on") @db.Timestamptz(3)
+  markedById     String    @map("marked_by_id") @db.Uuid
+  markedAt       DateTime  @default(now()) @map("marked_at") @db.Timestamptz(3)
+  reversedById   String?   @map("reversed_by_id") @db.Uuid
+  reversedAt     DateTime? @map("reversed_at") @db.Timestamptz(3)
+  reversalReason String?   @map("reversal_reason") @db.VarChar(500)
 
-  installment Installment @relation(fields: [installmentId], references: [id])
-  markedBy    User        @relation("PaymentMarkedBy", fields: [markedById], references: [id])
-  reversedBy  User?       @relation("PaymentReversedBy", fields: [reversedById], references: [id])
+  ticket     Ticket            @relation(fields: [ticketId], references: [id])
+  payer      Member            @relation(fields: [payerMemberId], references: [id])
+  mode       PaymentModeMaster @relation(fields: [modeId], references: [id])
+  markedBy   User              @relation("PaymentMarkedBy", fields: [markedById], references: [id])
+  reversedBy User?             @relation("PaymentReversedBy", fields: [reversedById], references: [id])
 
-  @@index([installmentId])
-  @@index([markedAt])
+  @@index([ticketId, reversedAt])
+  @@index([paidOn])
   @@map("payment_records")
 }
 
+/// The chit amount handed to a ticket for a month. The organizer decides the
+/// amount when recording it, and it is copied to that month's schedule.
 model Payout {
   id           String   @id @default(uuid(7)) @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -260,12 +303,15 @@ model Payout {
   ticketId     String   @unique @map("ticket_id") @db.Uuid
   amount       BigInt
   paidOn       DateTime @map("paid_on") @db.Timestamptz(3)
+  modeId       String?  @map("mode_id") @db.Uuid
+  reference    String?  @db.VarChar(120)
   recordedById String   @map("recorded_by_id") @db.Uuid
   note         String?  @db.VarChar(500)
 
-  group      ChitGroup @relation(fields: [groupId], references: [id])
-  ticket     Ticket    @relation(fields: [ticketId], references: [id])
-  recordedBy User      @relation(fields: [recordedById], references: [id])
+  group      ChitGroup          @relation(fields: [groupId], references: [id])
+  ticket     Ticket             @relation(fields: [ticketId], references: [id])
+  mode       PaymentModeMaster? @relation(fields: [modeId], references: [id])
+  recordedBy User               @relation(fields: [recordedById], references: [id])
 
   @@unique([groupId, monthNumber])
   @@map("payouts")

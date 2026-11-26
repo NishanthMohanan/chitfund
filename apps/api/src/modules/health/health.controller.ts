@@ -4,7 +4,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
 
-type CheckStatus = 'up' | 'down';
+type CheckStatus = 'up' | 'down' | 'disabled';
 
 export type HealthResponse = {
   status: 'ok';
@@ -44,6 +44,9 @@ export class HealthController {
   }
 
   private async checkRedis(): Promise<CheckStatus> {
+    if (!this.redis.client) {
+      return 'disabled';
+    }
     try {
       return (await this.redis.client.ping()) === 'PONG' ? 'up' : 'down';
     } catch {

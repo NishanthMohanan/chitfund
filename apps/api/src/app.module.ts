@@ -7,6 +7,9 @@ import { ZodValidationPipe } from './common/validation/zod-validation.pipe';
 import { APP_CONFIG, ConfigModule } from './config/config.module';
 import { type Env } from './config/env';
 import { buildLoggerParams } from './logging/logger.config';
+import { AuthGuard } from './modules/auth/auth.guard';
+import { AuthModule } from './modules/auth/auth.module';
+import { ChitModule } from './modules/chit/chit.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -21,8 +24,12 @@ import { RedisModule } from './redis/redis.module';
     PrismaModule,
     RedisModule,
     HealthModule,
+    AuthModule,
+    ChitModule,
   ],
   providers: [
+    // Order matters: AuthGuard attaches the user that RolesGuard checks.
+    { provide: APP_GUARD, useExisting: AuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
