@@ -87,6 +87,18 @@ export function splitPaise(total: Paise, parts: number): Paise[] {
   return Array.from({ length: parts }, (_, index) => (index < extra ? base + 1n : base));
 }
 
+/**
+ * Divides a total into `parts` equal amounts, or returns null when the total
+ * does not split into whole paise.
+ */
+export function dividePaiseExactly(total: Paise, parts: number): Paise | null {
+  if (!Number.isSafeInteger(parts) || parts <= 0) {
+    throw new MoneyError('Money can only be divided by a positive whole number');
+  }
+  const count = BigInt(parts);
+  return total % count === 0n ? total / count : null;
+}
+
 /** Serialises paise for JSON transport, where bigint is not supported. */
 export function paiseToString(paise: Paise): string {
   return paise.toString();

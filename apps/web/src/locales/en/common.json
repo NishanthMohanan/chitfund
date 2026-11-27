@@ -136,6 +136,7 @@
     "editDescription": "Changes apply to groups created after you save. Existing groups keep their own schedule.",
     "basics": "Plan details",
     "chitValueRupees": "Chit value (₹)",
+    "chitValueHint": "Members × monthly installment. Filling in either one fills in the other.",
     "memberCount": "Number of members",
     "durationHint": "The plan runs {{months}} months: one commission month plus one payout month per member.",
     "installmentRupees": "Monthly installment (₹)",
@@ -155,7 +156,8 @@
     "errors": {
       "name": "Enter a name",
       "members": "Enter a number from 2 to 200",
-      "amount": "Enter a valid amount"
+      "amount": "Enter a valid amount",
+      "chitValueMismatch": "Chit value must be {{members}} × the installment, which is {{amount}}. Enter an amount that divides evenly across {{members}} members."
     }
   },
   "groups": {

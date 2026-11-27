@@ -1,4 +1,12 @@
-import { formatINR, parseRupeesToPaise, templateInputSchema } from '@chitfund/shared';
+import {
+  type Paise,
+  dividePaiseExactly,
+  formatINR,
+  multiplyPaise,
+  paiseToString,
+  parseRupeesToPaise,
+  templateInputSchema,
+} from '@chitfund/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +60,32 @@ function initialState(plan?: TemplateDetail): PlanState {
 }
 
 const rupees = (value: string) => parseRupeesToPaise(value);
+const toRupees = (paise: Paise) => paiseToRupees(paiseToString(paise));
+
+function parseMembers(value: string): number | null {
+  const count = Number.parseInt(value, 10);
+  return Number.isInteger(count) && count >= 2 && count <= 200 ? count : null;
+}
+
+/**
+ * Chit value is always members × installment. Whichever side was typed last
+ * drives the other; a chit value that does not split into whole paise leaves
+ * the installment alone and is flagged on submit.
+ */
+function fromInstallment(state: PlanState): PlanState {
+  const count = parseMembers(state.memberCount);
+  const installment = rupees(state.installment);
+  if (count === null || installment === null) return state;
+  return { ...state, chitValue: toRupees(multiplyPaise(installment, count)) };
+}
+
+function fromChitValue(state: PlanState): PlanState {
+  const count = parseMembers(state.memberCount);
+  const chitValue = rupees(state.chitValue);
+  if (count === null || chitValue === null) return state;
+  const installment = dividePaiseExactly(chitValue, count);
+  return installment === null ? state : { ...state, installment: toRupees(installment) };
+}
 
 export function PlanFormPage() {
   const { planId } = useParams();
@@ -79,15 +113,19 @@ function PlanForm({ plan }: { plan?: TemplateDetail }) {
   const collection = validMembers && installment !== null ? installment * BigInt(members) : null;
 
   const setMembers = (value: string) => {
-    const count = Number.parseInt(value, 10);
-    setState((current) => ({
-      ...current,
-      memberCount: value,
-      payouts:
-        Number.isInteger(count) && count >= 2 && count <= 200
-          ? Array.from({ length: count }, (_, index) => current.payouts[index] ?? '')
-          : current.payouts,
-    }));
+    const count = parseMembers(value);
+    setState((current) => {
+      const next: PlanState = {
+        ...current,
+        memberCount: value,
+        payouts:
+          count !== null
+            ? Array.from({ length: count }, (_, index) => current.payouts[index] ?? '')
+            : current.payouts,
+      };
+      // The installment is the fixed monthly figure, so it wins when both are set.
+      return rupees(next.installment) !== null ? fromInstallment(next) : fromChitValue(next);
+    });
   };
 
   const save = useChange(
@@ -115,6 +153,12 @@ function PlanForm({ plan }: { plan?: TemplateDetail }) {
     const chitValue = rupees(state.chitValue);
     if (chitValue === null || chitValue <= 0n) next.chitValue = t('plans.errors.amount');
     if (installment === null || installment <= 0n) next.installment = t('plans.errors.amount');
+    if (!next.chitValue && !next.installment && collection !== null && chitValue !== collection) {
+      next.chitValue = t('plans.errors.chitValueMismatch', {
+        amount: formatINR(collection),
+        members,
+      });
+    }
     state.payouts.forEach((value, index) => {
       if (rupees(value) === null) next.payouts[index] = t('plans.errors.amount');
     });
@@ -196,7 +240,10 @@ function PlanForm({ plan }: { plan?: TemplateDetail }) {
               inputMode="decimal"
               value={state.chitValue}
               error={fieldError('chitValue')}
-              onChange={(event) => setState({ ...state, chitValue: event.target.value })}
+              hint={t('plans.chitValueHint')}
+              onChange={(event) =>
+                setState(fromChitValue({ ...state, chitValue: event.target.value }))
+              }
             />
             <Input
               label={t('plans.memberCount')}
@@ -216,7 +263,9 @@ function PlanForm({ plan }: { plan?: TemplateDetail }) {
                   ? t('plans.collectionHint', { amount: formatINR(collection) })
                   : undefined
               }
-              onChange={(event) => setState({ ...state, installment: event.target.value })}
+              onChange={(event) =>
+                setState(fromInstallment({ ...state, installment: event.target.value }))
+              }
             />
           </div>
         </Card>

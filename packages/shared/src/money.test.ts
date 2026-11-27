@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MoneyError,
+  dividePaiseExactly,
   formatINR,
   multiplyPaise,
   paiseFromString,
@@ -95,6 +96,20 @@ describe('splitPaise', () => {
 
   it('rejects negative totals', () => {
     expect(() => splitPaise(-1n, 2)).toThrow(MoneyError);
+  });
+});
+
+describe('dividePaiseExactly', () => {
+  it('divides when the total splits into whole paise', () => {
+    expect(dividePaiseExactly(5_000_000n, 20)).toBe(250_000n);
+  });
+
+  it('returns null when the total does not split evenly', () => {
+    expect(dividePaiseExactly(1_000n, 3)).toBeNull();
+  });
+
+  it.each([0, -2, 1.5])('rejects %s parts', (parts) => {
+    expect(() => dividePaiseExactly(100n, parts)).toThrow(MoneyError);
   });
 });
 
