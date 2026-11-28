@@ -9,7 +9,7 @@
     "pnpm": ">=9.15.0"
   },
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node --env-file=.env scripts/dev-prepare.mjs && turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

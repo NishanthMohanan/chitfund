@@ -16,7 +16,7 @@ A digital chit book for one organizer. It replaces the paper records an organize
 ### Chit plans and groups
 
 - **Plan templates** hold the chit value, member count, duration, a **fixed** monthly installment (the same every month, month 1 included) and an exact payout amount for each month. The standard plan is 20 members over 21 months at ₹2,500 a month for a ₹50,000 chit. Bigger plans don't scale from these figures; each template's amounts are entered on their own.
-- **Plan shape is enforced:** duration = member count + 1. Month 1 is always the organizer's commission month: its whole collection is commission and nobody receives a payout. From month 2 on, every month has a payout above ₹0 and no larger than the month's collection (member count × installment).
+- **Plan shape is enforced:** duration = member count + 1. Month 1 is always the organizer's commission month: its whole collection is commission and nobody receives a payout. From month 2 on, every month has a payout above ₹0. There is no upper limit: a payout may exceed the month's collection.
 - Templates don't hold a start date or due day. Both are chosen when a **group** is created from a template, and the group gets its own copy of the month schedule.
 - A **draft** group is fully editable: name, code, start date, due day, its plan (re-copied from a template) and each month's payout amount. Once the group starts, the due day and due dates are fixed and can't be edited.
 - A group is draft → active → completed. Only a draft group can be cancelled; a completed group can't be reopened.

@@ -327,7 +327,7 @@ function PlanForm({ plan }: { plan?: TemplateDetail }) {
                       </td>
                       <td className="px-4 py-2 text-right align-top">
                         <span className="inline-block pt-9">
-                          {leftover !== null && <Amount value={leftover < 0n ? 0n : leftover} />}
+                          {leftover !== null && <Amount value={leftover} />}
                         </span>
                       </td>
                     </tr>

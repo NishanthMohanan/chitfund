@@ -20,6 +20,11 @@
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
+    },
+    "@chitfund/shared#dev": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true
     }
   }
 }

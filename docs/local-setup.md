@@ -53,7 +53,7 @@ pnpm dev
 - API: `http://localhost:<PORT>/api/health`. API docs are at `/api/docs` on the same port (development only).
 - Web: `http://localhost:<WEB_PORT>`. It calls the API directly at `VITE_API_URL`, and the API allows the origins in `WEB_ORIGIN` through CORS. If you open the web app on another origin, add it to `WEB_ORIGIN`. Unset `VITE_API_URL` to use Vite's same-origin `/api` proxy (`API_PROXY_TARGET`) instead.
 
-`pnpm dev` builds `@chitfund/shared` first, then runs the shared package in watch mode, the API with `nest start --watch`, and Vite, all together.
+`pnpm dev` first runs `scripts/dev-prepare.mjs`: if PostgreSQL is not reachable it starts it with `pg_ctl` (set `PG_BIN_DIR` and `PG_DATA_DIR` in `.env` for a zip install without a service), then applies pending migrations with `prisma migrate deploy`. With `SUPERADMIN_SEED_ON_START=true` the API creates the superadmin at startup. It then builds `@chitfund/shared`, and runs the shared package in watch mode, the API with `nest start --watch`, and Vite, all together.
 
 ## Verify
 

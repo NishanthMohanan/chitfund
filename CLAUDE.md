@@ -97,7 +97,7 @@ The full rules are in MASTER_PROMPT.md section 2. In short:
 - Plan shape is enforced:
   - duration = member count + 1;
   - month 1 is always the commission month (`isOrganizerMonth`, derived, never typed): members pay, nobody withdraws;
-  - months 2 onward each have a payout above ₹0, no larger than member count × installment.
+  - months 2 onward each have a payout above ₹0. There is no upper limit; a payout may exceed one month of collection.
 - Start date and due day are set on the **group**, not the template. A group copies the schedule into `ChitGroupMonth`. A draft group is fully editable; after it starts, due dates are fixed.
 - Payments always pay off the oldest unpaid month first. Paying ahead and future-dated payments are allowed. The dashboard's "collected" counts only payments dated up to today.
 - A payout:

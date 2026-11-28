@@ -89,16 +89,15 @@ export const templateInputSchema = z
         message: 'A plan runs one month longer than its member count',
       });
     }
-    const collection = value.monthlyInstallment * BigInt(value.memberCount);
     value.months.forEach((month, index) => {
       if (month.monthNumber === 1) {
         return;
       }
-      if (month.payoutAmount <= 0n || month.payoutAmount > collection) {
+      if (month.payoutAmount <= 0n) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['months', index, 'payoutAmount'],
-          message: 'Enter a payout above zero and no more than one month of collection',
+          message: 'Enter a payout above zero',
         });
       }
     });
